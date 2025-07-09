@@ -1,0 +1,2 @@
+criar um sensor da temperatura de cidades e criar um gráfico com relação cidade temperatura tempo
+usar api de sites meteorologicos
