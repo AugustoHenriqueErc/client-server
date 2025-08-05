@@ -1,4 +1,5 @@
 import socket
+import threading
 
 
 class MonitoringCenter:
@@ -49,8 +50,11 @@ class MonitoringCenter:
             conn, addr = self.server_socket.accept()
             print(f"Conexão recebida de {addr}")
 
-            # Manipula a conexão recebida
-            self.handleConnection(conn, addr)
+            # Cria e inicia uma thread para lidar com cada cliente
+            # handleConnection manipula a conexão recebida
+            thread = threading.Thread(target=self.handleConnection, args=(conn, addr))
+            thread.daemon = True
+            thread.start()
 
     def handleConnection(self, conn, addr):
         """
@@ -74,12 +78,12 @@ class MonitoringCenter:
                 data = data.decode()
                 print(f"Dados recebidos de {addr}: {data}")
 
-                # TODO: Chamar o método para processar os dados recebidos
-
-                # FIXME: Remover este exemplo
-                # Exemplo de processamento: converte para maiúsculas
-                response = data.upper()
+                # Chama método para processar os dados do sensor
+                response = self.handleSensor(data)
+    
+                # Envia a resposta de volta ao cliente
                 conn.sendall(response.encode())
+                print(f"Resposta enviada para {addr}: {response}")
         except Exception as e:
             print(f"Erro ao manipular conexão com {addr}: {e}")
         finally:
@@ -99,6 +103,23 @@ class MonitoringCenter:
             print("Servidor encerrado pelo usuário.")
         except Exception as e:
             print(f"Erro ao fechar o socket: {e}")
+
+    def handleSensor(self, sensorData):
+        """
+        Método para processar os dados recebidos de um sensor de temperatura
+
+        Args:
+            sensorData (str): Dados do sensor recebidos
+        """
+        print("Processando dados do sensor...")
+
+        # TODO: Implementar lógica de processamento dos dados do sensor
+        # TODO: Retornar uma resposta adequada ao cliente
+
+        # FIXME: Remover exemplo de resposta e retornar resposta real
+        # Exemplo de resposta
+        response = f"Informações do sensor: '{sensorData}'"
+        return response
 
 
 if __name__ == "__main__":
