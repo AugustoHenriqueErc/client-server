@@ -60,23 +60,23 @@ class SensorClient:
             try:
                 while True:
                     # Gera temperatura simulada
-                    temperatura = round(random.uniform(10, 40), 2)
+                    temperature = round(random.uniform(10, 40), 2)
                    
                     # Timestamp
                     timestamp = datetime.now().isoformat()
                    
                     # Mensagem formatada
-                    msg = f"{self.sensorId},{temperatura},{timestamp}"
+                    sensorData = f"{self.sensorId},{temperature},{timestamp}"
                    
                     # Envia dados ao servidor
-                    sock.sendall(msg.encode())
+                    sock.sendall(sensorData.encode())
                    
                     # Recebe resposta (até 1024 bytes)
-                    resposta = sock.recv(1024).decode()
+                    response = sock.recv(1024).decode()
                    
                     # Exibe no console
                     print(
-                        f"[{self.sensorId}] {temperatura}°C | {resposta}"
+                        f"[{self.sensorId}] {temperature}°C | {response}"
                     )
                    
                     # Aguarda próximo envio
