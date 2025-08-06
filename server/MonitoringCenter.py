@@ -12,7 +12,7 @@ class MonitoringCenter:
         server_socket (socket.socket): Socket do servidor
     """
 
-    def __init__(self, host="127.0.0.1", port=12000):
+    def __init__(self, host="localhost", port=12000):
         """
         Inicializa o servidor com o endereço e a porta
 
@@ -32,7 +32,9 @@ class MonitoringCenter:
 
         # Coloca o servidor em modo de escuta para conexões
         self.server_socket.listen(1)
-        print(f"Servidor escutando em {self.host}:{self.port}")
+        print(
+            f"Servidor escutando em {self.server_socket.getsockname()[0]}:{self.port}"
+        )
 
     def start(self):
         """
@@ -48,7 +50,7 @@ class MonitoringCenter:
 
             # Aceita uma nova conexão de cliente
             conn, addr = self.server_socket.accept()
-            print(f"Conexão recebida de {addr}")
+            print(f"Conexão recebida de {addr[0]}:{addr[1]}")
 
             # Cria e inicia uma thread para lidar com cada cliente
             # handleConnection manipula a conexão recebida
@@ -76,20 +78,20 @@ class MonitoringCenter:
 
                 # Decodifica os dados recebidos
                 data = data.decode()
-                print(f"Dados recebidos de {addr}: {data}")
+                print(f"Dados recebidos de {addr[0]}:{addr[1]}: {data}")
 
                 # Chama método para processar os dados do sensor
                 response = self.handleSensor(data)
-    
+
                 # Envia a resposta de volta ao cliente
                 conn.sendall(response.encode())
-                print(f"Resposta enviada para {addr}: {response}")
+                print(f"Resposta enviada para {addr[0]}:{addr[1]}: {response}")
         except Exception as e:
-            print(f"Erro ao manipular conexão com {addr}: {e}")
+            print(f"Erro ao manipular conexão com {addr[0]}:{addr[1]}: {e}")
         finally:
             # Fecha a conexão com o cliente
             conn.close()
-            print(f"Conexão encerrada com {addr}")
+            print(f"Conexão encerrada com {addr[0]}:{addr[1]}")
 
     def shutdown(self):
         """

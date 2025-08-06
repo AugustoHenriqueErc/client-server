@@ -19,7 +19,7 @@ class SensorClient:
         interval (int): Tempo em segundos entre envios de leituras
     """
 
-    def __init__(self, sensorId=None, host="127.0.0.1", port=12000, interval=15):
+    def __init__(self, sensorId=None, host="localhost", port=12000, interval=15):
         """
         Inicializa o cliente sensor
 
