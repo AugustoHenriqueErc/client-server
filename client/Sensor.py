@@ -45,7 +45,7 @@ class SensorClient:
         3. Monta a mensagem "sensorId,temperatura,timestamp"
         4. Envia ao servidor e aguarda resposta
         5. Exibe no console:
-           [sensorId] temperatura°C | resposta_do_servidor
+            [DD/MM/AAAA HH:MM:SS] sensorId | temperatura °C | resposta do servidor
         6. Aguarda o intervalo definido antes de enviar a próxima leitura
         """
 
@@ -53,7 +53,7 @@ class SensorClient:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             # Conecta ao servidor
             sock.connect((self.host, self.port))
-            
+
             # Gera sensorId se não foi definido manualmente
             if self.sensorId is None:
                 self.sensorId = f"sensor-{sock.getsockname()[1]}"
@@ -61,24 +61,27 @@ class SensorClient:
                 while True:
                     # Gera temperatura simulada
                     temperature = round(random.uniform(10, 40), 2)
-                   
+
                     # Timestamp
                     timestamp = datetime.now().isoformat()
-                   
+
                     # Mensagem formatada
                     sensorData = f"{self.sensorId},{temperature},{timestamp}"
-                   
+
                     # Envia dados ao servidor
                     sock.sendall(sensorData.encode())
-                   
+
                     # Recebe resposta (até 1024 bytes)
                     response = sock.recv(1024).decode()
-                   
+
                     # Exibe no console
-                    print(
-                        f"[{self.sensorId}] {temperature}°C | {response}"
-                    )
-                   
+                    if not response:
+                        print("Conexão encerrada pelo servidor.")
+                        sock.close()
+                        break
+                    formattedTimestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    print(f"[{formattedTimestamp}] {self.sensorId} | {temperature}°C | {response}")
+
                     # Aguarda próximo envio
                     time.sleep(self.interval)
             except KeyboardInterrupt:
