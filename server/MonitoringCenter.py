@@ -113,15 +113,21 @@ class MonitoringCenter:
         Args:
             sensorData (str): Dados do sensor recebidos
         """
-        print("Processando dados do sensor...")
 
-        # TODO: Implementar lógica de processamento dos dados do sensor
-        # TODO: Retornar uma resposta adequada ao cliente
+        data = sensorData.split(",")
+        sensorId = data[0]
+        temperature = data[1]
+        timestamp = data[2]
 
-        # FIXME: Remover exemplo de resposta e retornar resposta real
-        # Exemplo de resposta
-        response = f"Informações do sensor: '{sensorData}'"
-        return response
+        # Verifica se a temperatura está fora do intervalo esperado
+        if float(temperature) < 15:
+            status = "Abaixo"
+        elif float(temperature) > 35:
+            status = "Acima"
+        else:
+            status = "Normal"
+
+        return f"[{timestamp}] {sensorId} | {temperature}°C | {status}"
 
 
 if __name__ == "__main__":
