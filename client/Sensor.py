@@ -63,7 +63,7 @@ class SensorClient:
                     temperature = round(random.uniform(10, 40), 2)
 
                     # Timestamp
-                    timestamp = datetime.now().isoformat()
+                    timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
                     # Mensagem formatada
                     sensorData = f"{self.sensorId},{temperature},{timestamp}"
@@ -74,19 +74,32 @@ class SensorClient:
                     # Recebe resposta (até 1024 bytes)
                     response = sock.recv(1024).decode()
 
-                    # Exibe no console
+                    # Se não houver resposta, encerra conexão
                     if not response:
-                        print("Conexão encerrada pelo servidor.")
+                        print(
+                            f"\033[33m[{timestamp}] Conexão encerrada pelo servidor.\033[0m"
+                        )
                         sock.close()
                         break
-                    formattedTimestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                    print(f"[{formattedTimestamp}] {self.sensorId} | {temperature}°C | {response}")
+
+                    # Seta cor da mensagem baseado na resposta
+                    if response.endswith("Abaixo"):
+                        colorStatus = "\033[36m"  # Ciano
+                    elif response.endswith("Acima"):
+                        colorStatus = "\033[31m"  # Vermelho
+                    else:
+                        colorStatus = "\033[0m"  # padrão (sem cor)
+
+                    # Exibe resposta no console
+                    print(f"{colorStatus}{response}\033[0m")
 
                     # Aguarda próximo envio
                     time.sleep(self.interval)
             except KeyboardInterrupt:
                 # Tratamento de encerramento pelo usuário
-                print(f"\n{self.sensorId} encerrando.")
+                print(
+                    f"\n\033[33m[{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] {self.sensorId} encerrado pelo usuário.\033[0m"
+                )
 
 
 if __name__ == "__main__":
