@@ -48,15 +48,23 @@ class MonitoringCenter:
         while True:
             print("Aguardando conexão de cliente...")
 
-            # Aceita uma nova conexão de cliente
-            conn, addr = self.server_socket.accept()
-            print(f"Conexão recebida de {addr[0]}:{addr[1]}")
+            try:
+                # Aceita uma nova conexão de cliente
+                conn, addr = self.server_socket.accept()
+                print(f"Conexão recebida de {addr[0]}:{addr[1]}")
 
-            # Cria e inicia uma thread para lidar com cada cliente
-            # handleConnection manipula a conexão recebida
-            thread = threading.Thread(target=self.handleConnection, args=(conn, addr))
-            thread.daemon = True
-            thread.start()
+                # Cria e inicia uma thread para lidar com cada cliente
+                # handleConnection manipula a conexão recebida
+                thread = threading.Thread(
+                    target=self.handleConnection, args=(conn, addr)
+                )
+                thread.daemon = True
+                thread.start()
+            except KeyboardInterrupt:
+                self.shutdown()
+                break
+            except Exception as e:
+                print(f"Erro na conexão: {e}")
 
     def handleConnection(self, conn, addr):
         """
@@ -97,12 +105,10 @@ class MonitoringCenter:
         """
         Encerra o servidor e fecha o socket
         """
-        print("\nEncerrando o servidor...")
-
         try:
             # Fecha o socket do servidor
             self.server_socket.close()
-            print("Servidor encerrado pelo usuário.")
+            print("\nServidor encerrado pelo usuário.")
         except Exception as e:
             print(f"Erro ao fechar o socket: {e}")
 
@@ -113,23 +119,27 @@ class MonitoringCenter:
         Args:
             sensorData (str): Dados do sensor recebidos
         """
+        try:
+            data = sensorData.split(",")
+            sensorId = data[0]
+            temperature = data[1]
+            timestamp = data[2]
 
-        data = sensorData.split(",")
-        sensorId = data[0]
-        temperature = data[1]
-        timestamp = data[2]
+            # Verifica se a temperatura está fora do intervalo esperado
+            if float(temperature) < 15:
+                status = "Abaixo"
+            elif float(temperature) > 35:
+                status = "Acima"
+            else:
+                status = "Normal"
 
-        # Verifica se a temperatura está fora do intervalo esperado
-        if float(temperature) < 15:
-            status = "Abaixo"
-        elif float(temperature) > 35:
-            status = "Acima"
-        else:
-            status = "Normal"
-
-        return f"[{timestamp}] {sensorId} | {temperature}°C | {status}"
+            return f"[{timestamp}] {sensorId} | {temperature}°C | {status}"
+        except Exception as e:
+            print(f"Erro ao processar dados do sensor: {e}")
+            return "Erro"
 
 
+# Inicia o servidor se este arquivo for executado diretamente
 if __name__ == "__main__":
     server = MonitoringCenter()
     try:
