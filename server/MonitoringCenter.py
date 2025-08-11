@@ -1,3 +1,4 @@
+import logging
 import socket
 import threading
 
@@ -23,6 +24,7 @@ class MonitoringCenter:
 
         self.host = host
         self.port = port
+        self.logger = logging.getLogger()
 
         # Cria o socket do servidor utilizando TCP
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,9 +34,14 @@ class MonitoringCenter:
 
         # Coloca o servidor em modo de escuta para conexões
         self.server_socket.listen(1)
-        print(
+
+        message = (
             f"Servidor escutando em {self.server_socket.getsockname()[0]}:{self.port}"
         )
+
+        # Log de inicialização do servidor
+        logging.debug(message)
+        print(message)
 
     def start(self):
         """
@@ -43,16 +50,18 @@ class MonitoringCenter:
         Este método entra em um loop infinito aguardando conexões
         Para cada cliente conectado, chama o método handleConnection
         """
-        
+
         print("Aguardando conexão de cliente...")
 
         # Loop que aguarda conexões de clientes
         while True:
-
             try:
                 # Aceita uma nova conexão de cliente
                 conn, addr = self.server_socket.accept()
-                print(f"\033[32mConexão recebida de {addr[0]}:{addr[1]}\033[0m")
+
+                message = f"Conexão recebida de {addr[0]}:{addr[1]}"
+                logging.debug(message)
+                print(f"\033[32m{message}\033[0m")
 
                 # Cria e inicia uma thread para lidar com cada cliente
                 # handleConnection manipula a conexão recebida
@@ -65,7 +74,9 @@ class MonitoringCenter:
                 self.shutdown()
                 break
             except Exception as e:
-                print(f"Erro na conexão: {e}")
+                message = f"Erro de conexão inesperado: {e}"
+                logging.error(message)
+                print(f"\033[31m{message}\033[0m")
 
     def handleConnection(self, conn, addr):
         """
@@ -87,20 +98,28 @@ class MonitoringCenter:
 
                 # Decodifica os dados recebidos
                 data = data.decode()
-                print(f"Dados recebidos de {addr[0]}:{addr[1]}: {data}")
+                logging.debug(f"Dados recebidos de {addr[0]}:{addr[1]}: {data}")
 
                 # Chama método para processar os dados do sensor
-                response = self.handleSensor(data)
+                response = self.handleSensor(data, addr)
 
                 # Envia a resposta de volta ao cliente
                 conn.sendall(response.encode())
-                print(f"Resposta enviada para {addr[0]}:{addr[1]}: {response}")
+                logging.debug(f"Resposta enviada para {addr[0]}:{addr[1]}: {response}")
+                print(
+                    f"Dado de temperatura do {addr[0]}:{addr[1]} recebidos, processado e respondido"
+                )
+
         except Exception as e:
-            print(f"Erro ao manipular conexão com {addr[0]}:{addr[1]}: {e}")
+            message = f"Erro ao manipular conexão com {addr[0]}:{addr[1]}: {e}"
+            logging.error(message)
+            print(message)
         finally:
             # Fecha a conexão com o cliente
             conn.close()
-            print(f"\033[90mConexão encerrada with {addr[0]}:{addr[1]}\033[0m")
+            message = f"Conexão encerrada com {addr[0]}:{addr[1]}"
+            logging.debug(message)
+            print(f"\033[90m{message}\033[0m")
 
     def shutdown(self):
         """
@@ -109,16 +128,22 @@ class MonitoringCenter:
         try:
             # Fecha o socket do servidor
             self.server_socket.close()
-            print("\nServidor encerrado pelo usuário.")
-        except Exception as e:
-            print(f"Erro ao fechar o socket: {e}")
+            message = "Servidor encerrado pelo usuário."
+            logging.debug(message)
+            print(f"\033[90m{message}\033[0m")
 
-    def handleSensor(self, sensorData):
+        except Exception as e:
+            message = f"Erro ao fechar o socket: {e}"
+            logging.error(message)
+            print(f"\033[31m{message}\033[0m")
+
+    def handleSensor(self, sensorData, addr):
         """
         Método para processar os dados recebidos de um sensor de temperatura
 
         Args:
             sensorData (str): Dados do sensor recebidos
+            addr (tuple): Endereço do cliente
         """
         try:
             data = sensorData.split(",")
@@ -134,11 +159,22 @@ class MonitoringCenter:
             else:
                 status = "Normal"
 
+            logging.debug(f"Dados de {addr[0]}:{addr[1]} processados")
+
             return f"[{timestamp}] {sensorId} | {temperature}°C | {status}"
         except Exception as e:
             print(f"Erro ao processar dados do sensor: {e}")
+            logging.error(f"Erro ao processar dados do sensor: {e}")
             return "Erro"
 
+
+# Configuração do logging para gerar logs de depuração
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    filename="./server/server_debug.log",
+    filemode="w",
+)
 
 # Inicia o servidor se este arquivo for executado diretamente
 if __name__ == "__main__":
