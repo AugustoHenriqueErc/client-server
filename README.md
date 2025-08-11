@@ -17,15 +17,15 @@
 ### Funcionalidades
 
 - [x] Recebe dados de múltiplos sensores
-- [ ] Armazena os dados em um log ou estrutura de dados (pode ser um arquivo CSV ou lista)
-  - [ ] Os dados de sensores e alertas emitidos
-  - [ ] Um resumo com a temperatura média de cada sensor
+- [x] Armazena os dados em um log ou estrutura de dados (pode ser um arquivo CSV ou lista)
+  - [x] Os dados de sensores e alertas emitidos
+  - [x] Um resumo com a temperatura média de cada sensor
 
 - [x] Verifica se a temperatura está fora de um intervalo aceitável (ex: <15°C ou >35°C)
   - [x] Se estiver, envia uma mensagem de alerta ao cliente (sensor)
 
-- [ ] Exibir no console:
+- [x] Exibir no console:
   - [x] Exibe os dados de sensores e alertas emitidos
-  - [ ] Um resumo com a temperatura média de cada sensor
+  - [x] Um resumo com a temperatura média de cada sensor
 
 - [ ] Implementar um gráfico simples com matplotlib

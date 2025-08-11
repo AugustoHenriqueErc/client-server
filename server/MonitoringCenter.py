@@ -1,6 +1,7 @@
 import logging
 import socket
 import threading
+from collections import defaultdict, deque
 
 
 class MonitoringCenter:
@@ -15,16 +16,25 @@ class MonitoringCenter:
 
     def __init__(self, host="localhost", port=12000):
         """
-        Inicializa o servidor com o endereço e a porta
+        Inicializa o servidor com o endereço e a porta.
 
         Args:
             host (str): Endereço do servidor
             port (int): Porta do servidor
         """
 
+        # Configurações básicas
         self.host = host
         self.port = port
         self.logger = logging.getLogger()
+
+        # Estruturas de dados para armazenar leituras dos sensores
+        # Mapa: sensorId -> deque de leituras (mantém somente as N últimas)
+        # Cada leitura é um dict: {"timestamp": str, "temperature": float, "status": str, "addr": str}
+        self.dataLock = threading.Lock()
+        self.temperatures = defaultdict(
+            lambda: deque(maxlen=20)
+        )  # últimas 20 por sensor (default: 5 minutos)
 
         # Cria o socket do servidor utilizando TCP
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -50,12 +60,11 @@ class MonitoringCenter:
         Este método entra em um loop infinito aguardando conexões
         Para cada cliente conectado, chama o método handleConnection
         """
-        
+
         print("Aguardando conexão de cliente...")
 
         # Loop que aguarda conexões de clientes
         while True:
-
             try:
                 # Aceita uma nova conexão de cliente
                 conn, addr = self.server_socket.accept()
@@ -108,7 +117,7 @@ class MonitoringCenter:
                 conn.sendall(response.encode())
                 logging.debug(f"Resposta enviada para {addr[0]}:{addr[1]}: {response}")
                 print(
-                    f"Dado de temperatura do {addr[0]}:{addr[1]} recebidos, processado e respondido"
+                    f"Dado de temperatura do {addr[0]}:{addr[1]} recebidos, processado, armazenado e respondido"
                 )
 
         except Exception as e:
@@ -149,23 +158,59 @@ class MonitoringCenter:
         try:
             data = sensorData.split(",")
             sensorId = data[0]
-            temperature = data[1]
+            temperature = float(data[1])
             timestamp = data[2]
 
             # Verifica se a temperatura está fora do intervalo esperado
-            if float(temperature) < 15:
+            if temperature < 15:
                 status = "Abaixo"
-            elif float(temperature) > 35:
+            elif temperature > 35:
                 status = "Acima"
             else:
                 status = "Normal"
 
-            logging.debug(f"Dados de {addr[0]}:{addr[1]} processados")
+            # Armazena a leitura em memória de forma thread-safe
+            with self.dataLock:
+                self.temperatures[sensorId].append(
+                    {
+                        "timestamp": timestamp,
+                        "temperature": temperature,
+                        "status": status,
+                        "addr": addr[0],
+                    }
+                )
+
+            self.getAverageTemperatures()
+            logging.debug(f"Dados de {addr[0]}:{addr[1]} processados e armazenados")
 
             return f"[{timestamp}] {sensorId} | {temperature}°C | {status}"
         except Exception as e:
             print(f"Erro ao processar dados do sensor: {e}")
             logging.error(f"Erro ao processar dados do sensor: {e}")
+            return "Erro"
+
+    def getAverageTemperatures(self):
+        """
+        Retorna a média de temperatura registrada para cada sensor.
+
+        Returns:
+            dict: Mapeamento sensorId -> temperatura média (float). Retorna {} se não houver leituras.
+        """
+        try:
+            avgTemperatures = {}
+            for sensorId, readings in self.temperatures.items():
+                if readings:
+                    avgTemperatures[sensorId] = round(
+                        sum(reading["temperature"] for reading in readings)
+                        / len(readings),
+                        2,
+                    )
+
+            logging.debug(f"Temperaturas médias (ºC): {avgTemperatures}")
+            return avgTemperatures
+        except Exception as e:
+            print(f"Erro ao calcular temperaturas médias: {e}")
+            logging.error(f"Erro ao calcular temperaturas médias: {e}")
             return "Erro"
 
 
