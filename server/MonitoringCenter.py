@@ -52,7 +52,7 @@ class MonitoringCenter:
             try:
                 # Aceita uma nova conexão de cliente
                 conn, addr = self.server_socket.accept()
-                print(f"Conexão recebida de {addr[0]}:{addr[1]}")
+                print(f"\033[32mConexão recebida de {addr[0]}:{addr[1]}\033[0m")
 
                 # Cria e inicia uma thread para lidar com cada cliente
                 # handleConnection manipula a conexão recebida
@@ -100,7 +100,7 @@ class MonitoringCenter:
         finally:
             # Fecha a conexão com o cliente
             conn.close()
-            print(f"Conexão encerrada com {addr[0]}:{addr[1]}")
+            print(f"\033[90mConexão encerrada with {addr[0]}:{addr[1]}\033[0m")
 
     def shutdown(self):
         """
