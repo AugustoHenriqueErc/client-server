@@ -142,7 +142,4 @@ class MonitoringCenter:
 # Inicia o servidor se este arquivo for executado diretamente
 if __name__ == "__main__":
     server = MonitoringCenter()
-    try:
-        server.start()
-    except KeyboardInterrupt:
-        server.shutdown()
+    server.start()
