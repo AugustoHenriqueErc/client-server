@@ -43,10 +43,11 @@ class MonitoringCenter:
         Este método entra em um loop infinito aguardando conexões
         Para cada cliente conectado, chama o método handleConnection
         """
+        
+        print("Aguardando conexão de cliente...")
 
         # Loop que aguarda conexões de clientes
         while True:
-            print("Aguardando conexão de cliente...")
 
             try:
                 # Aceita uma nova conexão de cliente
