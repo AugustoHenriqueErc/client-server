@@ -281,10 +281,16 @@ class MonitoringCenter:
             plt.grid(True, alpha=0.3)
             plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             
-            # Formata o eixo x para mostrar datas/horas de forma legível
-            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
-            plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=1))
+            # Formata o eixo x para mostrar os timestamps dos sensores
+            ax = plt.gca()
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+            
+            # Rotaciona os labels do eixo X para melhor legibilidade
             plt.xticks(rotation=45)
+            
+            # Permite que o matplotlib ajuste automaticamente o eixo X baseado nos dados
+            ax.relim()
+            ax.autoscale_view()
             
             # Adiciona linhas de referência para os limites de temperatura
             plt.axhline(y=15, color='blue', linestyle='--', alpha=0.7, label='Limite Inferior (15°C)')
