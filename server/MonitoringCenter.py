@@ -2,6 +2,10 @@ import logging
 import socket
 import threading
 from collections import defaultdict, deque
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from datetime import datetime
 
 
 class MonitoringCenter:
@@ -181,6 +185,10 @@ class MonitoringCenter:
                 )
 
             self.getAverageTemperatures()
+            
+            # Gera/atualiza o gráfico após processar os dados
+            self.plotTemperatureGraph()
+            
             logging.debug(f"Dados de {addr[0]}:{addr[1]} processados e armazenados")
 
             return f"[{timestamp}] {sensorId} | {temperature}°C | {status}"
@@ -212,6 +220,88 @@ class MonitoringCenter:
             print(f"Erro ao calcular temperaturas médias: {e}")
             logging.error(f"Erro ao calcular temperaturas médias: {e}")
             return "Erro"
+
+    def plotTemperatureGraph(self):
+        """
+        Gera um gráfico com matplotlib mostrando temperatura por tempo para todos os sensores.
+        Sobrescreve o arquivo 'temperature_monitoring.png' a cada atualização.
+        """
+
+        # Define o matplotlib sem GUI
+        matplotlib.use('Agg')
+        
+        # Desabilita logs do matplotlib
+        logging.getLogger('matplotlib').setLevel(logging.WARNING)
+
+        try:
+            # Limpa a figura anterior para evitar sobreposição
+            plt.clf()
+            
+            # Configura o tamanho da figura
+            plt.figure(figsize=(12, 8))
+            
+            # Cores para diferenciar os sensores
+            colors = ['green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'blue', 'red']
+            colorIndex = 0
+            
+            # Itera sobre todos os sensores e suas leituras
+            for sensorId, readings in self.temperatures.items():
+                if readings:
+                    # Extrai os dados para o gráfico
+                    timestamps = []
+                    temperatures = []
+                    
+                    for reading in readings:
+                        try:
+                            # Converte timestamp string para datetime
+                            timestampStr = reading["timestamp"]
+                            # Formato: "DD/MM/YYYY HH:MM:SS"
+                            timestamp = datetime.strptime(timestampStr, "%d/%m/%Y %H:%M:%S")
+                            timestamps.append(timestamp)
+                            temperatures.append(reading["temperature"])
+                        except ValueError:
+                            # Se houver erro no parsing, pula esta leitura
+                            continue
+                    
+                    # Plota a linha para este sensor se há dados válidos
+                    if timestamps and temperatures:
+                        plt.plot(timestamps, temperatures, 
+                                marker='o', 
+                                linestyle='-', 
+                                color=colors[colorIndex % len(colors)],
+                                label=f'Sensor {sensorId}',
+                                linewidth=2,
+                                markersize=4)
+                        colorIndex += 1
+            
+            # Configurações do gráfico
+            plt.title('Monitoramento de Temperatura dos Sensores', fontsize=16, fontweight='bold')
+            plt.xlabel('Tempo', fontsize=12)
+            plt.ylabel('Temperatura (°C)', fontsize=12)
+            plt.grid(True, alpha=0.3)
+            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            
+            # Formata o eixo x para mostrar datas/horas de forma legível
+            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+            plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=1))
+            plt.xticks(rotation=45)
+            
+            # Adiciona linhas de referência para os limites de temperatura
+            plt.axhline(y=15, color='blue', linestyle='--', alpha=0.7, label='Limite Inferior (15°C)')
+            plt.axhline(y=35, color='red', linestyle='--', alpha=0.7, label='Limite Superior (35°C)')
+            
+            # Ajusta o layout para evitar cortes
+            plt.tight_layout()
+            
+            # Salva o gráfico sobrescrevendo o arquivo anterior
+            plt.savefig('./server/temperature_monitoring.png', dpi=300, bbox_inches='tight')
+            plt.close()  # Fecha a figura para liberar memória
+            
+            logging.debug("Gráfico de temperatura atualizado e salvo em './server/temperature_monitoring.png'")
+            
+        except Exception as e:
+            print(f"Erro ao gerar gráfico de temperatura: {e}")
+            logging.error(f"Erro ao gerar gráfico de temperatura: {e}")
 
 
 # Configuração do logging para gerar logs de depuração
